@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="sr-Cyrl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Предложите исправку или допуну породичног стабла."
+    />
+    <title>Предлог за породично стабло</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+  </head>
+  <body class="proposal-page">
+    <main class="proposal-shell">
+      <a class="back-link" href="./family.html">← Назад на стабло</a>
+
+      <article class="proposal-card">
+        <div id="proposalLoading">
+          <p class="eyebrow">Породица Томовић</p>
+          <h1>Учитавање...</h1>
+        </div>
+
+        <div id="invalidPerson" hidden>
+          <p class="eyebrow">Непозната особа</p>
+          <h1>Линк није исправан</h1>
+          <p class="proposal-intro">
+            Особа из овог линка не постоји у тренутно објављеном стаблу.
+          </p>
+          <a class="button button-primary" href="./family.html">
+            Отвори породично стабло
+          </a>
+        </div>
+
+        <div id="proposalContent" hidden>
+          <p class="eyebrow">Предлог за особу</p>
+          <h1 id="proposalPersonName"></h1>
+          <p class="proposal-intro">
+            Напишите све што знате: исправку имена, датум, родитеље,
+            супружника, дјецу или други користан податак. Предлог неће одмах
+            промијенити јавно стабло.
+          </p>
+
+          <section class="published-person" aria-label="Тренутно објављени подаци">
+            <strong id="publishedName"></strong>
+            <span id="publishedBirthday"></span>
+          </section>
+
+          <form id="proposalForm" class="proposal-form">
+            <div class="form-field">
+              <label for="proposalMessage">Ваш предлог *</label>
+              <textarea
+                id="proposalMessage"
+                name="message"
+                minlength="10"
+                maxlength="5000"
+                required
+                placeholder="На примјер: Тачна година рођења је..., супружник је..., недостаје дијете..."
+              ></textarea>
+              <span class="field-hint">Од 10 до 5.000 знакова.</span>
+            </div>
+
+            <div class="form-field">
+              <span class="field-label">Фотографија</span>
+              <label id="dropZone" class="drop-zone" for="proposalImage" tabindex="0">
+                <span>
+                  <strong>Изаберите или превуците фотографију</strong>
+                  <span>JPG, PNG, WEBP или GIF, највише 5 MB.</span>
+                </span>
+                <input
+                  id="proposalImage"
+                  name="image"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                />
+              </label>
+              <p id="selectedFile" class="selected-file" hidden></p>
+            </div>
+
+            <p id="formStatus" class="form-status" role="status"></p>
+            <button id="submitButton" class="button button-primary" type="submit">
+              Пошаљи предлог
+            </button>
+          </form>
+
+          <section id="successPanel" class="success-panel" hidden>
+            <h2>Предлог је послат</h2>
+            <p>
+              Хвала. Подаци су сачувани одвојено од стабла и биће прегледани
+              прије било какве јавне измјене.
+            </p>
+            <a class="button button-secondary" href="./family.html">
+              Врати се на стабло
+            </a>
+          </section>
+        </div>
+      </article>
+    </main>
+
+    <script type="module" src="./js/proposal.js"></script>
+  </body>
+</html>

@@ -1,0 +1,50 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /proposals/{proposalId} {
+      allow create: if isValidProposal(proposalId);
+      allow read, update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+
+  function isValidProposal(proposalId) {
+    let data = request.resource.data;
+    return data.keys().hasAll([
+        "personId",
+        "message",
+        "imagePath",
+        "status",
+        "schemaVersion",
+        "submittedAt"
+      ])
+      && data.keys().hasOnly([
+        "personId",
+        "message",
+        "imagePath",
+        "status",
+        "schemaVersion",
+        "submittedAt"
+      ])
+      && data.personId is string
+      && data.personId.size() > 0
+      && data.personId.size() <= 128
+      && data.message is string
+      && data.message.size() >= 10
+      && data.message.size() <= 5000
+      && data.imagePath is string
+      && (
+        data.imagePath == ""
+        || data.imagePath.matches(
+          "^proposals/" + proposalId + "/[A-Za-z0-9._-]+$"
+        )
+      )
+      && data.status == "pending"
+      && data.schemaVersion == 1
+      && data.submittedAt == request.time;
+  }
+}
