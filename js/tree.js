@@ -1,9 +1,11 @@
 import { familyData } from "./family-data.js";
 
 const INITIAL_PERSON_ID = "0";
+const mobilePanelQuery = window.matchMedia("(max-width: 850px)");
 const peopleById = new Map(familyData.map((person) => [person.id, person]));
 const treeLayout = document.querySelector("#treeLayout");
 const personPanel = document.querySelector("#personPanel");
+const closePersonPanelButton = document.querySelector("#closePersonPanel");
 const personSearchForm = document.querySelector("#personSearchForm");
 const searchNameInput = document.querySelector("#searchName");
 const searchFatherNameInput = document.querySelector("#searchFatherName");
@@ -35,7 +37,13 @@ try {
 }
 
 openHelpButton.addEventListener("click", () => helpDialog.showModal());
+closePersonPanelButton.addEventListener("click", closeSidePanel);
 personSearchForm.addEventListener("submit", handleSearch);
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !personPanel.hidden && !helpDialog.open) {
+    closeSidePanel();
+  }
+});
 
 function createTree() {
   const chartData = getPublishedFamilyData();
@@ -161,7 +169,7 @@ function renderSearchResults(matches, searchedName) {
     button.type = "button";
     button.setAttribute(
       "aria-label",
-      `Отвори податке за ${getPersonName(match.person)}`,
+      `Прикажи у стаблу: ${getPersonName(match.person)}`,
     );
 
     for (const [index, ancestor] of match.path.entries()) {
@@ -181,9 +189,22 @@ function renderSearchResults(matches, searchedName) {
       }
     }
 
-    button.addEventListener("click", () => selectPerson(match.person.id));
+    button.addEventListener("click", () => selectSearchResult(match.person.id));
     searchResults.append(button);
   }
+}
+
+function selectSearchResult(personId) {
+  if (!mobilePanelQuery.matches) {
+    selectPerson(personId);
+    return;
+  }
+
+  closeSidePanel();
+  chart.updateMainId(personId);
+  requestAnimationFrame(() => {
+    chart.updateTree({ initial: false, tree_position: "main_to_middle" });
+  });
 }
 
 function addDetail(label, value) {
@@ -248,8 +269,36 @@ function getProposalUrl(personId) {
 }
 
 function openSidePanel() {
+  const wasHidden = personPanel.hidden;
   personPanel.hidden = false;
   treeLayout.classList.remove("panel-hidden");
+
+  if (wasHidden && mobilePanelQuery.matches) {
+    requestAnimationFrame(() => {
+      closePersonPanelButton.focus({ preventScroll: true });
+    });
+  } else if (wasHidden) {
+    requestAnimationFrame(() => {
+      chart?.updateTree({
+        initial: false,
+        tree_position: "inherit",
+        transition_time: 0,
+      });
+    });
+  }
+}
+
+function closeSidePanel() {
+  personPanel.hidden = true;
+  treeLayout.classList.add("panel-hidden");
+
+  requestAnimationFrame(() => {
+    chart?.updateTree({
+      initial: false,
+      tree_position: "inherit",
+      transition_time: 0,
+    });
+  });
 }
 
 function isPublishedPerson(person) {

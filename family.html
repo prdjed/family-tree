@@ -55,11 +55,13 @@
         </form>
         <button
           id="openHelpButton"
-          class="button button-secondary"
+          class="button button-secondary help-button"
           type="button"
           aria-controls="helpDialog"
+          aria-label="Како се користи"
         >
-          Како се користи
+          <span class="help-button-label">Како се користи</span>
+          <span class="help-button-icon" aria-hidden="true">?</span>
         </button>
       </div>
     </header>
@@ -71,6 +73,15 @@
       </section>
 
       <aside id="personPanel" class="person-panel" aria-live="polite" hidden>
+        <button
+          id="closePersonPanel"
+          class="panel-close"
+          type="button"
+          aria-label="Затвори панел"
+        >
+          ×
+        </button>
+
         <div id="searchResultsPanel" hidden>
           <p class="eyebrow">Претрага</p>
           <h2 id="searchResultsTitle">Резултати</h2>
