@@ -76,6 +76,43 @@ a {
   font-size: clamp(2rem, 4vw, 3.4rem);
 }
 
+.header-actions {
+  display: flex;
+  align-items: end;
+  gap: 0.75rem;
+}
+
+.person-search {
+  display: flex;
+  align-items: end;
+  gap: 0.55rem;
+}
+
+.search-field {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.search-field label {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 750;
+}
+
+.search-field label span {
+  font-weight: 500;
+}
+
+.search-field input {
+  width: clamp(130px, 13vw, 190px);
+  min-height: 44px;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  background: var(--surface);
+  color: var(--text);
+}
+
 .eyebrow {
   margin: 0 0 0.35rem;
   color: var(--accent-strong);
@@ -207,6 +244,56 @@ textarea:focus-visible,
 .person-panel h2 {
   margin-bottom: 1.25rem;
   font-size: clamp(1.8rem, 3vw, 2.5rem);
+}
+
+.search-results-summary {
+  margin: -0.65rem 0 1.25rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.search-results {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.search-result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  width: 100%;
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface-raised);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  text-align: left;
+}
+
+.search-result:hover {
+  border-color: var(--accent);
+  background: var(--surface-soft);
+}
+
+.search-result-person {
+  color: var(--accent-strong);
+  font-weight: 800;
+}
+
+.search-result-separator {
+  color: var(--muted);
+}
+
+.search-empty {
+  padding: 1rem;
+  border: 1px dashed var(--border);
+  border-radius: 0.75rem;
+  color: var(--muted);
+  line-height: 1.6;
 }
 
 .privacy-note {
@@ -506,8 +593,25 @@ textarea {
 
 @media (max-width: 850px) {
   .site-header {
+    display: grid;
     align-items: flex-start;
     min-height: auto;
+  }
+
+  .header-actions {
+    width: 100%;
+  }
+
+  .person-search {
+    flex: 1;
+  }
+
+  .search-field {
+    flex: 1;
+  }
+
+  .search-field input {
+    width: 100%;
   }
 
   .tree-layout {
@@ -537,7 +641,13 @@ textarea {
     gap: 1rem;
   }
 
-  .site-header .button {
+  .header-actions,
+  .person-search {
+    display: grid;
+  }
+
+  .site-header .button,
+  .person-search {
     width: 100%;
   }
 

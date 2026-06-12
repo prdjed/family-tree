@@ -28,14 +28,40 @@
           Изаберите особу да видите објављене податке или предложите исправку.
         </p>
       </div>
-      <button
-        id="openHelpButton"
-        class="button button-secondary"
-        type="button"
-        aria-controls="helpDialog"
-      >
-        Како се користи
-      </button>
+      <div class="header-actions">
+        <form id="personSearchForm" class="person-search" role="search">
+          <div class="search-field">
+            <label for="searchName">Име</label>
+            <input
+              id="searchName"
+              name="name"
+              type="search"
+              required
+              autocomplete="off"
+              placeholder="нпр. Marko"
+            />
+          </div>
+          <div class="search-field">
+            <label for="searchFatherName">Име оца <span>(опционо)</span></label>
+            <input
+              id="searchFatherName"
+              name="fatherName"
+              type="search"
+              autocomplete="off"
+              placeholder="нпр. Sava"
+            />
+          </div>
+          <button class="button button-primary" type="submit">Претражи</button>
+        </form>
+        <button
+          id="openHelpButton"
+          class="button button-secondary"
+          type="button"
+          aria-controls="helpDialog"
+        >
+          Како се користи
+        </button>
+      </div>
     </header>
 
     <main id="treeLayout" class="tree-layout panel-hidden">
@@ -45,7 +71,14 @@
       </section>
 
       <aside id="personPanel" class="person-panel" aria-live="polite" hidden>
-        <div id="personPanelContent">
+        <div id="searchResultsPanel" hidden>
+          <p class="eyebrow">Претрага</p>
+          <h2 id="searchResultsTitle">Резултати</h2>
+          <p id="searchResultsSummary" class="search-results-summary"></p>
+          <div id="searchResults" class="search-results"></div>
+        </div>
+
+        <div id="personPanelContent" hidden>
           <p class="eyebrow">Објављени подаци</p>
           <h2 id="personName"></h2>
           <dl id="personDetails" class="person-details"></dl>
@@ -80,6 +113,10 @@
           <li>Повуците празан простор да помјерите стабло.</li>
           <li>Користите точкић или покрет прстима за увећање.</li>
           <li>Кликните на особу да је поставите у средиште и видите податке.</li>
+          <li>
+            Особу можете пронаћи по имену и, по потреби, имену њеног оца.
+            Претрага прихвата и латиницу без квачица.
+          </li>
           <li>
             У панелу са подацима можете отворити страницу за исправке и допуне.
           </li>

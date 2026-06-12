@@ -4,6 +4,14 @@ const INITIAL_PERSON_ID = "0";
 const peopleById = new Map(familyData.map((person) => [person.id, person]));
 const treeLayout = document.querySelector("#treeLayout");
 const personPanel = document.querySelector("#personPanel");
+const personSearchForm = document.querySelector("#personSearchForm");
+const searchNameInput = document.querySelector("#searchName");
+const searchFatherNameInput = document.querySelector("#searchFatherName");
+const searchResultsPanel = document.querySelector("#searchResultsPanel");
+const searchResultsTitle = document.querySelector("#searchResultsTitle");
+const searchResultsSummary = document.querySelector("#searchResultsSummary");
+const searchResults = document.querySelector("#searchResults");
+const personPanelContent = document.querySelector("#personPanelContent");
 const personName = document.querySelector("#personName");
 const personDetails = document.querySelector("#personDetails");
 const personBiographySection = document.querySelector(
@@ -27,6 +35,7 @@ try {
 }
 
 openHelpButton.addEventListener("click", () => helpDialog.showModal());
+personSearchForm.addEventListener("submit", handleSearch);
 
 function createTree() {
   const chartData = getPublishedFamilyData();
@@ -63,9 +72,11 @@ function selectPerson(personId) {
     return;
   }
 
-  chart.updateMainId(personId);
-  chart.updateTree({ initial: false, tree_position: "main_to_middle" });
   showPerson(personId);
+  chart.updateMainId(personId);
+  requestAnimationFrame(() => {
+    chart.updateTree({ initial: false, tree_position: "main_to_middle" });
+  });
 }
 
 function showPerson(personId) {
@@ -74,8 +85,9 @@ function showPerson(personId) {
     return;
   }
 
-  personPanel.hidden = false;
-  treeLayout.classList.remove("panel-hidden");
+  openSidePanel();
+  searchResultsPanel.hidden = true;
+  personPanelContent.hidden = false;
   personName.textContent = getPersonName(person);
   proposalLink.href = getProposalUrl(person.id);
 
@@ -91,6 +103,87 @@ function showPerson(personId) {
   addRelationGroup("Родитељи", person.rels.parents);
   addRelationGroup("Супружници", person.rels.spouses);
   addRelationGroup("Дјеца", person.rels.children);
+}
+
+function handleSearch(event) {
+  event.preventDefault();
+
+  const searchedName = normalizeName(searchNameInput.value);
+  const searchedFatherName = normalizeName(searchFatherNameInput.value);
+  if (!searchedName) {
+    searchNameInput.focus();
+    return;
+  }
+
+  const matches = familyData
+    .filter(isPublishedPerson)
+    .filter((person) => nameMatches(person, searchedName))
+    .filter((person) => {
+      if (!searchedFatherName) {
+        return true;
+      }
+      const father = getFather(person);
+      return father ? nameMatches(father, searchedFatherName) : false;
+    })
+    .map((person) => ({
+      person,
+      path: getPaternalPath(person),
+    }))
+    .sort(compareSearchResults);
+
+  renderSearchResults(matches, searchNameInput.value.trim());
+}
+
+function renderSearchResults(matches, searchedName) {
+  openSidePanel();
+  personPanelContent.hidden = true;
+  searchResultsPanel.hidden = false;
+  searchResults.replaceChildren();
+
+  searchResultsTitle.textContent = `Резултати за „${searchedName}”`;
+  searchResultsSummary.textContent =
+    matches.length === 1
+      ? "Пронађена је 1 особа."
+      : `Пронађено је ${matches.length} особа.`;
+
+  if (matches.length === 0) {
+    const emptyMessage = document.createElement("p");
+    emptyMessage.className = "search-empty";
+    emptyMessage.textContent =
+      "Нема резултата. Провјерите име или покушајте без имена оца.";
+    searchResults.append(emptyMessage);
+    return;
+  }
+
+  for (const match of matches) {
+    const button = document.createElement("button");
+    button.className = "search-result";
+    button.type = "button";
+    button.setAttribute(
+      "aria-label",
+      `Отвори податке за ${getPersonName(match.person)}`,
+    );
+
+    for (const [index, ancestor] of match.path.entries()) {
+      const name = document.createElement("span");
+      name.textContent = getFirstName(ancestor);
+      if (index === match.path.length - 1) {
+        name.className = "search-result-person";
+      }
+      button.append(name);
+
+      if (index < match.path.length - 1) {
+        const separator = document.createElement("span");
+        separator.className = "search-result-separator";
+        separator.textContent = "›";
+        separator.setAttribute("aria-hidden", "true");
+        button.append(separator);
+      }
+    }
+
+    button.addEventListener("click", () => selectPerson(match.person.id));
+    searchResults.append(button);
+  }
 }
 
 function addDetail(label, value) {
@@ -131,9 +224,13 @@ function addRelationGroup(label, relationIds) {
 }
 
 function getPersonName(person) {
-  const firstName = person.data["first name"]?.trim() ?? "";
+  const firstName = getFirstName(person);
   const lastName = person.data["last name"]?.trim() ?? "";
   return [firstName, lastName].filter(Boolean).join(" ") || "Непозната особа";
+}
+
+function getFirstName(person) {
+  return person.data["first name"]?.trim() || "Непознато";
 }
 
 function getGenderLabel(gender) {
@@ -148,6 +245,103 @@ function getGenderLabel(gender) {
 
 function getProposalUrl(personId) {
   return `./proposal.html?personId=${encodeURIComponent(personId)}`;
+}
+
+function openSidePanel() {
+  personPanel.hidden = false;
+  treeLayout.classList.remove("panel-hidden");
+}
+
+function isPublishedPerson(person) {
+  return (
+    !person.to_add &&
+    !person._new_rel_data &&
+    !person.unknown &&
+    Boolean(person.data?.["first name"]?.trim())
+  );
+}
+
+function getFather(person) {
+  return person.rels.parents
+    .map((parentId) => peopleById.get(parentId))
+    .find((parent) => parent?.data?.gender === "M");
+}
+
+function getPaternalPath(person) {
+  const path = [];
+  const visitedIds = new Set();
+  let currentPerson = person;
+
+  while (currentPerson && !visitedIds.has(currentPerson.id)) {
+    visitedIds.add(currentPerson.id);
+    path.unshift(currentPerson);
+    currentPerson = getFather(currentPerson);
+  }
+
+  return path;
+}
+
+function nameMatches(person, normalizedSearch) {
+  const normalizedName = normalizeName(person.data["first name"]);
+  const nameParts = normalizedName.split(" ").filter(Boolean);
+  return normalizedName === normalizedSearch || nameParts.includes(normalizedSearch);
+}
+
+function normalizeName(value = "") {
+  const cyrillicToLatin = {
+    а: "a",
+    б: "b",
+    в: "v",
+    г: "g",
+    д: "d",
+    ђ: "dj",
+    е: "e",
+    ж: "z",
+    з: "z",
+    и: "i",
+    ј: "j",
+    к: "k",
+    л: "l",
+    љ: "lj",
+    м: "m",
+    н: "n",
+    њ: "nj",
+    о: "o",
+    п: "p",
+    р: "r",
+    с: "s",
+    т: "t",
+    ћ: "c",
+    у: "u",
+    ф: "f",
+    х: "h",
+    ц: "c",
+    ч: "c",
+    џ: "dz",
+    ш: "s",
+  };
+
+  return value
+    .trim()
+    .toLocaleLowerCase("sr")
+    .replace(/đ/g, "dj")
+    .replace(/[абвгдђежзијклљмнњопрстћуфхцчџш]/g, (letter) => {
+      return cyrillicToLatin[letter];
+    })
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function compareSearchResults(firstResult, secondResult) {
+  if (firstResult.path.length !== secondResult.path.length) {
+    return firstResult.path.length - secondResult.path.length;
+  }
+  return firstResult.path
+    .map(getFirstName)
+    .join(" ")
+    .localeCompare(secondResult.path.map(getFirstName).join(" "), "sr");
 }
 
 function getPublishedFamilyData() {
