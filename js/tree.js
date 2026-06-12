@@ -1,6 +1,6 @@
 import { familyData } from "./family-data.js";
 
-const INITIAL_PERSON_ID = "0";
+const INITIAL_PERSON_ID = "ea95ed0b-e94a-4669-bcc7-f466148cc99d";
 const mobilePanelQuery = window.matchMedia("(max-width: 850px)");
 const peopleById = new Map(familyData.map((person) => [person.id, person]));
 const treeLayout = document.querySelector("#treeLayout");
@@ -58,6 +58,7 @@ function createTree() {
     .setOrientationVertical();
 
   chart
+    .setProgenyDepth(1)
     .setCardHtml()
     .setCardDisplay([["first name", "last name"], ["birthday"]])
     .setCardDim(null)
@@ -333,7 +334,9 @@ function getPaternalPath(person) {
 function nameMatches(person, normalizedSearch) {
   const normalizedName = normalizeName(person.data["first name"]);
   const nameParts = normalizedName.split(" ").filter(Boolean);
-  return normalizedName === normalizedSearch || nameParts.includes(normalizedSearch);
+  return (
+    normalizedName === normalizedSearch || nameParts.includes(normalizedSearch)
+  );
 }
 
 function normalizeName(value = "") {
@@ -407,7 +410,9 @@ function getPublishedFamilyData() {
         ...person,
         rels: {
           parents: person.rels.parents.filter((id) => !editorRecordIds.has(id)),
-          children: person.rels.children.filter((id) => !editorRecordIds.has(id)),
+          children: person.rels.children.filter(
+            (id) => !editorRecordIds.has(id),
+          ),
           spouses: person.rels.spouses.filter((id) => !editorRecordIds.has(id)),
         },
       })),
