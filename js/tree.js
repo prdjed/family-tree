@@ -1,6 +1,7 @@
 import { familyData } from "./family-data.js";
 
 const INITIAL_PERSON_ID = "ea95ed0b-e94a-4669-bcc7-f466148cc99d";
+const MOBILE_DATA_BUTTON_MIN_ZOOM = 0.72;
 const mobilePanelQuery = window.matchMedia("(max-width: 850px)");
 const peopleById = new Map(familyData.map((person) => [person.id, person]));
 const treeLayout = document.querySelector("#treeLayout");
@@ -65,7 +66,10 @@ function createTree() {
     .setMiniTree(true)
     .setStyle("imageRect")
     .setOnHoverPathToMain()
-    .setOnCardClick((_event, datum) => selectPerson(datum.data.id));
+    .setOnCardUpdate(addMobileDataButton)
+    .setOnCardClick((_event, datum) => selectCardPerson(datum.data.id));
+
+  setupMobileDataButtonZoom();
 
   if (chartData.some((person) => person.id === INITIAL_PERSON_ID)) {
     chart.updateMainId(INITIAL_PERSON_ID);
@@ -73,6 +77,23 @@ function createTree() {
 
   chart.updateTree({ initial: true });
   loadingMessage.hidden = true;
+}
+
+function selectCardPerson(personId) {
+  if (!mobilePanelQuery.matches) {
+    selectPerson(personId);
+    return;
+  }
+
+  const person = peopleById.get(personId);
+  if (!person || person.to_add || person._new_rel_data) {
+    return;
+  }
+
+  chart.updateMainId(personId);
+  requestAnimationFrame(() => {
+    chart.updateTree({ initial: false, tree_position: "main_to_middle" });
+  });
 }
 
 function selectPerson(personId) {
@@ -86,6 +107,56 @@ function selectPerson(personId) {
   requestAnimationFrame(() => {
     chart.updateTree({ initial: false, tree_position: "main_to_middle" });
   });
+}
+
+function addMobileDataButton(datum) {
+  const person = datum.data;
+  if (!isPublishedPerson(person)) {
+    return;
+  }
+
+  const card = this.querySelector(".card");
+  if (!card) {
+    return;
+  }
+
+  const button = document.createElement("button");
+  button.className = "mobile-card-data-button";
+  button.type = "button";
+  button.textContent = "i";
+  button.title = "Прикажи податке";
+  button.setAttribute("aria-label", `Прикажи податке: ${getPersonName(person)}`);
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    showPerson(person.id);
+  });
+  card.append(button);
+}
+
+function setupMobileDataButtonZoom() {
+  const zoomSurface = document.querySelector("#FamilyChart #f3Canvas");
+  const zoom = zoomSurface?.__zoomObj;
+  if (!zoomSurface || !zoom) {
+    return;
+  }
+
+  let buttonsVisible;
+  const updateVisibility = (scale) => {
+    const shouldShow = scale >= MOBILE_DATA_BUTTON_MIN_ZOOM;
+    if (shouldShow === buttonsVisible) {
+      return;
+    }
+
+    buttonsVisible = shouldShow;
+    document
+      .querySelector("#FamilyChart")
+      .classList.toggle("mobile-data-buttons-visible", shouldShow);
+  };
+
+  zoom.on("zoom.mobileDataButtons", (event) => {
+    updateVisibility(event.transform.k);
+  });
+  updateVisibility(d3.zoomTransform(zoomSurface).k);
 }
 
 function showPerson(personId) {
